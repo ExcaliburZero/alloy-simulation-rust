@@ -1,28 +1,28 @@
 extern crate image;
+extern crate rand;
 
 use image::{ImageBuffer, Rgb};
+use rand::Rng;
 
 fn main() {
     let path = "img/";
 
     let materials_def = create_materials_def(0.75, 1.0, 1.25);
-    let mut alloy = create_alloy(5, 5, materials_def);
+    let mut alloy = create_alloy(50, 50, materials_def);
 
     initialize_materials(&mut alloy);
     initialize_points(&mut alloy);
 
     print_materials(&alloy);
 
-    println!("");
+    //println!("");
 
-    print_points(&alloy, &(alloy.points_a));
+    let iterations = 100;
 
-    for i in 0..10 {
+    for i in 0..iterations {
         alloy = update_alloy(i, alloy);
         write_alloy_png(&alloy, i, &path);
     }
-
-    print_points(&alloy, &(alloy.points_a));
 }
 
 struct MaterialsDef {
@@ -66,20 +66,41 @@ fn create_alloy(width: i32, height: i32, materials_def: MaterialsDef) -> Alloy {
 }
 
 fn initialize_materials(alloy: &mut Alloy) {
-    // TODO: change to actual implementation
+    let mut rng = rand::thread_rng();
     for i in 0..alloy.width {
         for j in 0..alloy.height {
-            for m in 0..3 {
-                let index = offset_3d(alloy.width, alloy.height, i, j, m);
-                alloy.materials[index as usize] = 0.33333333;
+            let var = 12;
+
+            let r1 = ((rng.gen::<i32>() % (2 * var)) - var) as f64;
+            let r2 = ((rng.gen::<i32>() % (2 * var)) - var) as f64;
+            let r3 = ((rng.gen::<i32>() % (2 * var)) - var) as f64;
+
+            let mut p1 = alloy.materials_def.ratio1 * 100.0 + r1;
+            let mut p2 = alloy.materials_def.ratio2 * 100.0 + r2;
+            let mut p3 = alloy.materials_def.ratio3 * 100.0 + r3;
+
+            if p1 < 0.0 {
+                p1 = 0.0;
             }
+            if p2 < 0.0 {
+                p2 = 0.0;
+            }
+            if p3 < 0.0 {
+                p3 = 0.0;
+            }
+
+            let total = p1 + p2 + p3;
+
+            alloy.materials[offset_3d(alloy.width, alloy.height, i, j, 0) as usize] = p1 / total;
+            alloy.materials[offset_3d(alloy.width, alloy.height, i, j, 1) as usize] = p2 / total;
+            alloy.materials[offset_3d(alloy.width, alloy.height, i, j, 2) as usize] = p3 / total;
         }
     }
 }
 
 fn initialize_points(alloy: &mut Alloy) {
     // TODO: implement
-    alloy.points_a[0] = 1000.0;
+    alloy.points_a[0] = 1000000.0;
 }
 
 fn print_materials(alloy: &Alloy) {
