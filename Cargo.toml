@@ -6,3 +6,4 @@ authors = ["Christopher Wells <cwellsny@nycap.rr.com>"]
 [dependencies]
 image = "*"
 rand = "*"
+rayon = "*"
