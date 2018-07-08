@@ -8,10 +8,12 @@ fn main() {
     let path = "img/";
 
     let materials_def = create_materials_def(0.75, 1.0, 1.25);
-    let mut alloy = create_alloy(50, 50, materials_def);
+    let mut alloy = create_alloy(200, 200, materials_def);
 
     initialize_materials(&mut alloy);
     initialize_points(&mut alloy);
+
+    // TODO: draw pattern
 
     print_materials(&alloy);
 
@@ -75,9 +77,9 @@ fn initialize_materials(alloy: &mut Alloy) {
             let r2 = ((rng.gen::<i32>() % (2 * var)) - var) as f64;
             let r3 = ((rng.gen::<i32>() % (2 * var)) - var) as f64;
 
-            let mut p1 = alloy.materials_def.ratio1 * 100.0 + r1;
-            let mut p2 = alloy.materials_def.ratio2 * 100.0 + r2;
-            let mut p3 = alloy.materials_def.ratio3 * 100.0 + r3;
+            let mut p1 = alloy.materials_def.ratio1 * 100.0 + r1 + 0.01;
+            let mut p2 = alloy.materials_def.ratio2 * 100.0 + r2 + 0.01;
+            let mut p3 = alloy.materials_def.ratio3 * 100.0 + r3 + 0.01;
 
             if p1 < 0.0 {
                 p1 = 0.0;
@@ -101,15 +103,42 @@ fn initialize_materials(alloy: &mut Alloy) {
 fn initialize_points(alloy: &mut Alloy) {
     // TODO: implement
     alloy.points_a[0] = 1000000.0;
+
+    let value = 100.0;
+
+    for i in 0..alloy.width {
+        for j in 0..alloy.height {
+            let index = (offset_2d(alloy.width, i, j)) as usize;
+            alloy.points_a[index] = value;
+            alloy.points_b[index] = value;
+        }
+    }
+}
+
+fn stamp_dots(alloy: &mut Alloy) {
+    let width = alloy.width as f64;
+
+    for a in [1.0, 9.0].iter() {
+        for b in [1.0, 9.0].iter() {
+            let x = a * width / 10.0;
+            let y = b * width / 10.0;
+
+            //stamp_brush();
+        }
+    }
 }
 
 fn print_materials(alloy: &Alloy) {
     for i in 0..alloy.width {
         for j in 0..alloy.height {
+            let mut sum = 0.0;
             for m in 0..3 {
                 let index = offset_3d(alloy.width, alloy.height, i, j, m);
                 let value: f64 = *&(alloy.materials)[index as usize];
-                print!("{} ", value);
+
+                if value == 0.0 {
+                    print!("{} ", value);
+                }
             }
             println!("");
         }
@@ -148,6 +177,7 @@ fn update_alloy(turn: i32, alloy: Alloy) -> Alloy {
             for j in 0..alloy.height {
                 let index = offset_2d(alloy.width, i, j) as usize;
                 let value = next_position_temp(&alloy.materials_def, &alloy.materials, alloy.width, alloy.height, &read, i, j);
+
                 write[index] = value;
             }
         }
@@ -184,18 +214,12 @@ fn next_position_temp(materials_def: &MaterialsDef, materials: &Vec<f64>, width:
             temp_mat += temp_per;
         }
 
-
-
         match m {
             0 => total_temp += temp_mat * materials_def.const1,
             1 => total_temp += temp_mat * materials_def.const2,
             _ => total_temp += temp_mat * materials_def.const3,
         }
     }
-
-
-
-
 
     return total_temp / num_neighbors;
 }
