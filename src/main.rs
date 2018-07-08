@@ -9,6 +9,8 @@ use rayon::prelude::*;
 fn main() {
     let path = "img/";
     let dims = 2048;
+    let iterations = 100;
+    let write_images = true;
 
     let materials_def = create_materials_def(0.75, 1.0, 1.25);
     let mut alloy = create_alloy(dims, dims, materials_def);
@@ -18,18 +20,13 @@ fn main() {
 
     // TODO: draw pattern
 
-    //print_materials(&alloy);
-
-    //println!("");
-
-    let iterations = 100;
-
     for i in 0..iterations {
         alloy = update_alloy(i, alloy);
-        //print_points(&alloy, &alloy.points_a);
-        //println!("");
         println!("{}", i);
-        //write_alloy_png(&alloy, i, &path);
+
+        if (write_images) {
+            write_alloy_png(&alloy, i, &path);
+        }
     }
 }
 
@@ -174,11 +171,8 @@ fn update_alloy(turn: i32, alloy: Alloy) -> Alloy {
     let mut alloy = alloy;
     {
         let (read, write) = if turn % 2 == 0 {
-        //let (read, write) = if 2 % 2 == 0 {
-            //println!("a");
             (&alloy.points_a, &mut alloy.points_b)
         } else {
-            //println!("b");
             (&alloy.points_b, &mut alloy.points_a)
         };
 
@@ -187,44 +181,15 @@ fn update_alloy(turn: i32, alloy: Alloy) -> Alloy {
         let materials_def = &alloy.materials_def;
         let materials = &alloy.materials;
 
-        let indices: Vec<i32> = (0..width).collect();
-
-        /*let f = |w: &mut Vec<f64>| {
-            |i: &i32| {
-                for j in 0..height {
-                    let index = offset_2d(width, *i, j) as usize;
-
-                    let value = next_position_temp(materials_def, materials, width, height, &read, *i, j);
-
-                    w[index] = value;
-                }
-            }
-        };*/
-        
-        //indices.par_iter().map(|i| {
-        //indices.par_iter().map(f(write)).collect()
-        //print_points(&write, width, height);
-
-        //println!("read");
-        //print_points(&read, width, height);
-
-        //println!("");
-
         write.par_chunks_mut(height as usize).enumerate().for_each(|(i, slice)| {
             for j in 0..height {
                 let index = offset_2d(width, i as i32, j) as usize;
 
                 let value = next_position_temp(materials_def, materials, width, height, &read, i as i32, j);
 
-                //slice[j as usize] = turn as f64;
                 slice[j as usize] = value;
             }
         });
-
-        //print_points(&write, width, height);
-
-        //println!("read");
-        //print_points(&read, width, height);
     }
 
     alloy
@@ -299,6 +264,5 @@ fn write_alloy_png(alloy: &Alloy, i: i32, path: &str) {
     file.push_str(&num_string);
     file.push_str(".png");
 
-    println!("{}", file);
     image.save(file).unwrap();
 }
