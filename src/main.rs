@@ -1,4 +1,10 @@
+extern crate image;
+
+use image::{ImageBuffer, Rgb};
+
 fn main() {
+    let path = "img/";
+
     let materials_def = create_materials_def(0.75, 1.0, 1.25);
     let mut alloy = create_alloy(5, 5, materials_def);
 
@@ -13,6 +19,7 @@ fn main() {
 
     for i in 0..10 {
         alloy = update_alloy(i, alloy);
+        write_alloy_png(&alloy, i, &path);
     }
 
     print_points(&alloy, &(alloy.points_a));
@@ -137,8 +144,8 @@ fn next_position_temp(materials_def: &MaterialsDef, materials: &Vec<f64>, width:
         for i in (x - 1)..(x + 2) {
             let mut temp_per: f64 = 0.0;
             for j in (y - 1)..(y + 2) {
-                if (i >= 0 && j >= 0 &&
-                    i < width && j < height) {
+                if i >= 0 && j >= 0 &&
+                    i < width && j < height {
                     let index = offset_2d(width, i, j) as usize;
                     let mat_index = offset_3d(width, height, i, j, m) as usize;
                     let value: f64 = read[index];
@@ -146,7 +153,7 @@ fn next_position_temp(materials_def: &MaterialsDef, materials: &Vec<f64>, width:
 
                     temp_per += value * mat_percent;
 
-                    if (m == 0) {
+                    if m == 0 {
                         num_neighbors += 1.0;
                     }
                 }
@@ -170,4 +177,39 @@ fn next_position_temp(materials_def: &MaterialsDef, materials: &Vec<f64>, width:
 
 
     return total_temp / num_neighbors;
+}
+
+fn pix(value: f64, max: f64) -> u8 {
+    if value < 0.0 {
+        return value as u8;
+    }
+
+    let val = (256.0 * (value / max)) as i32;
+    if val > 255 {
+        return 255;
+    }
+
+    val as u8
+}
+
+fn write_alloy_png(alloy: &Alloy, i: i32, path: &str) {
+    let width = alloy.width as u32;
+    let height = alloy.height as u32;
+    let mut image = ImageBuffer::<Rgb<u8>, _>::new(width, height);
+
+    for i in 0..alloy.width {
+        for j in 0..alloy.height {
+            // TODO: fix to use correct points Vec
+            let index = offset_2d(alloy.width, i, j) as usize;
+            image.get_pixel_mut(i as u32, j as u32).data = [pix(alloy.points_a[index], 1000.0), 0, 0];
+        }
+    }
+
+    let mut file = path.clone().to_owned();
+    let num_string = i.to_string();
+    file.push_str(&num_string);
+    file.push_str(".png");
+
+    println!("{}", file);
+    image.save(file).unwrap();
 }
